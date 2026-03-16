@@ -1,0 +1,529 @@
+:root {
+    --bg-color: #0f172a;
+    --container-bg: rgba(30, 41, 59, 0.7);
+    --border-color: rgba(255, 255, 255, 0.1);
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --accent-gradient: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    --accent-color: #8b5cf6;
+    --danger-color: #ef4444;
+    --success-color: #10b981;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    font-family: 'Outfit', sans-serif;
+    background-color: var(--bg-color);
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
+    background-attachment: fixed;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--text-main);
+}
+
+.app-container {
+    width: 100%;
+    max-width: 480px;
+    background: var(--container-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    padding: 2.5rem 2rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    margin: 1rem;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+h1 {
+    margin: 0;
+    font-size: 2.5rem;
+    font-weight: 600;
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.02em;
+}
+
+p.subtitle {
+    margin: 0.5rem 0 0;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+.input-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+input[type="text"],
+input[type="datetime-local"] {
+    padding: 1rem 1.25rem;
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    background: rgba(15, 23, 42, 0.6);
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+input[type="text"] {
+    flex-grow: 1;
+    min-width: 200px;
+}
+
+input[type="datetime-local"] {
+    color: var(--text-muted);
+    min-width: 150px;
+}
+
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+}
+
+input[type="text"]:focus,
+input[type="datetime-local"]:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+    color: var(--text-main);
+}
+
+input[type="text"]::placeholder {
+    color: var(--text-muted);
+}
+
+button.add-btn {
+    background: var(--accent-gradient);
+    color: white;
+    border: none;
+    border-radius: 16px;
+    padding: 0 1.5rem;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+button.add-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px -10px rgba(139, 92, 246, 0.5);
+}
+
+button.add-btn:active {
+    transform: translateY(0);
+}
+
+.todo-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding-bottom: 5rem; /* 하단 플러스 버튼이 내용을 가리지 않도록 여백 추가 */
+}
+
+.todo-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    transition: all 0.3s ease;
+    animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.todo-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+    transform: translateX(4px);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes scaleOut {
+    to {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+}
+
+.checkbox-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    margin-right: 1rem;
+}
+
+.checkbox-container input {
+    opacity: 0;
+    position: absolute;
+    cursor: pointer;
+}
+
+.checkmark {
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--text-muted);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.checkbox-container input:checked ~ .checkmark {
+    background: var(--success-color);
+    border-color: var(--success-color);
+}
+
+.checkmark::after {
+    content: "";
+    position: absolute;
+    display: none;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.checkbox-container input:checked ~ .checkmark::after {
+    display: block;
+}
+
+.todo-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    overflow: hidden;
+}
+
+.todo-text {
+    font-size: 1rem;
+    transition: color 0.3s ease;
+    word-break: break-all;
+}
+
+.todo-due {
+    font-size: 0.8rem;
+    color: var(--accent-color);
+    font-weight: 500;
+}
+
+.todo-due.overdue {
+    color: var(--danger-color);
+}
+
+.todo-item.completed .todo-text,
+.todo-item.completed .todo-due {
+    color: var(--text-muted);
+    text-decoration: line-through;
+    text-decoration-color: var(--text-muted);
+}
+
+.action-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-left: 0.5rem;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.action-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 폰에서는 버튼 영역 항상 표시, 데스크탑에서는 hover 시에만 표시 */
+@media (hover: hover) {
+    .todo-item:hover .action-buttons {
+        opacity: 1;
+    }
+}
+
+@media (hover: none) {
+    .action-buttons {
+        opacity: 1;
+    }
+}
+
+.edit-btn:hover {
+    color: var(--accent-color);
+    background: rgba(139, 92, 246, 0.1);
+}
+
+.delete-btn:hover {
+    color: var(--danger-color);
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.save-btn:hover {
+    color: var(--success-color);
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.cancel-btn:hover {
+    color: var(--text-main);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.action-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* 편집 모드 스타일 */
+.todo-content.edit-mode {
+    width: 100%;
+}
+
+.edit-input {
+    width: 100%;
+    padding: 0.4rem 0.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--accent-color);
+    background: rgba(15, 23, 42, 0.8);
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 1rem;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+    box-sizing: border-box;
+}
+
+.edit-due-input {
+    margin-top: 0.35rem;
+    font-size: 0.85rem;
+    padding: 0.3rem 0.5rem;
+    color: var(--text-muted);
+}
+
+.edit-due-input::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.edit-due-input::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+}
+
+/* 편집 모드일 때는 버튼 항상 표시 */
+.todo-item .action-buttons:has(.save-btn) {
+    opacity: 1;
+}
+
+.empty-state {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 2rem 0;
+    display: none;
+}
+
+.empty-state.visible {
+    display: block;
+    animation: slideIn 0.4s ease forwards;
+}
+
+/* 플로팅 버튼 (새작업 추가) */
+.fab-btn {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent-gradient);
+    color: white;
+    border: none;
+    border-radius: 30px;
+    padding: 1rem 1.5rem;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 10px 25px -5px rgba(139, 92, 246, 0.5);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    z-index: 10;
+}
+
+.fab-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.fab-btn:hover {
+    transform: translateX(-50%) translateY(-3px);
+    box-shadow: 0 15px 30px -5px rgba(139, 92, 246, 0.6);
+}
+
+.fab-btn:active {
+    transform: translateX(-50%) translateY(0);
+}
+
+/* 모달 레이어 */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.modal-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-content {
+    background: var(--container-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    padding: 2.5rem;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    transform: translateY(20px) scale(0.95);
+    opacity: 0;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+}
+
+.modal-overlay.show .modal-content {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+}
+
+.modal-content h2 {
+    margin: 0 0 1.5rem 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+/* 모달 내부 폼 레이아웃 */
+.modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 0;
+}
+
+.modal-form input[type="text"] {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.modal-due-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 0.8rem 1rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.modal-due-row label {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.modal-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.modal-actions button {
+    flex: 1;
+    padding: 0.8rem;
+    border-radius: 12px;
+}
+
+.cancel-modal-btn {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
+    font-family: inherit;
+    font-weight: 500;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.cancel-modal-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-main);
+}
+
+/* Responsiveness */
+@media (max-width: 480px) {
+    .app-container {
+        border-radius: 0;
+        min-height: 100vh;
+        margin: 0;
+        border: none;
+        padding: 2rem 1.5rem;
+    }
+    body {
+        background-image: none;
+    }
+}
