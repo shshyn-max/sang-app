@@ -61,6 +61,7 @@
             font-weight: 600;
             background: var(--accent-gradient);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
             letter-spacing: -0.02em;
         }
@@ -328,7 +329,9 @@
                 border: none;
                 padding: 2rem 1.5rem;
             }
-            background-image: none;
+            body {
+                background-image: none;
+            }
         }
     </style>
 </head>
