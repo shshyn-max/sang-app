@@ -427,12 +427,21 @@
         }
 
         // Firestore 실시간 리스너 추가 (데이터 읽기)
-        const q = query(todosCollectionRef, orderBy('createdAt', 'desc'));
+        // 참고: 초기 인덱스 생성 문제를 피하기 위해 orderBy를 쿼리 레벨에서 제거하고 JS 배열에서 정렬
+        const q = query(todosCollectionRef);
         onSnapshot(q, (snapshot) => {
             todos = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
             }));
+            
+            // 프론트엔드에서 최신순으로 정렬
+            todos.sort((a, b) => {
+                const timeA = a.createdAt ? a.createdAt.toMillis() : Date.now();
+                const timeB = b.createdAt ? b.createdAt.toMillis() : Date.now();
+                return timeB - timeA;
+            });
+            
             renderTodos();
         }, (error) => {
             console.error("Error fetching data:", error);
