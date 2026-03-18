@@ -18,23 +18,12 @@
             <p class="subtitle">오늘 할 일을 기록해보세요</p>
         </header>
 
-        <!-- 새작업 추가 모달 (기본 숨김) -->
-        <div class="modal-overlay" id="add-modal" tabindex="-1">
-            <div class="modal-content">
-                <h2>새 작업 추가</h2>
-                <form class="input-group modal-form" id="todo-form">
-                    <input type="text" id="todo-input" placeholder="새로운 할 일 내용..." autocomplete="off">
-                    <div class="modal-due-row">
-                        <label for="todo-due">기한 (선택):</label>
-                        <input type="datetime-local" id="todo-due" aria-label="기한 선택">
-                    </div>
-                    <div class="modal-actions">
-                        <button type="button" class="cancel-modal-btn" id="close-modal-btn">취소</button>
-                        <button type="submit" class="add-btn">목록에 추가</button>
-                    </div>
-                </form>
-            </div>
-        </div>
+        <nav class="category-tabs" id="main-category-tabs">
+            <button class="tab-btn active" data-category="회사">회사</button>
+            <button class="tab-btn" data-category="집">집</button>
+            <button class="tab-btn" data-category="개인">개인</button>
+            <button class="tab-btn" data-category="기타">기타</button>
+        </nav>
 
         <div class="empty-state" id="empty-state">
             <p>등록된 할 일이 없습니다.<br>위에서 새로운 할 일을 추가해보세요!</p>
@@ -43,13 +32,83 @@
         <ul class="todo-list" id="todo-list">
             <!-- Items will be injected here by JS -->
         </ul>
-        
-        <!-- 하단 플로팅 버튼 -->
+    </main>
+
+    <!-- 새작업 추가 모달 -->
+    <div class="modal-overlay" id="add-modal" tabindex="-1">
+        <div class="modal-content">
+            <h2>새 작업 추가</h2>
+            <form class="input-group modal-form" id="todo-form">
+                <input type="text" id="todo-input" placeholder="새로운 할 일 내용..." autocomplete="off">
+                <div class="modal-row">
+                    <label for="todo-category">종류:</label>
+                    <select id="todo-category">
+                        <option value="회사">회사</option>
+                        <option value="집">집</option>
+                        <option value="개인">개인</option>
+                        <option value="기타" selected>기타(선택없음)</option>
+                    </select>
+                </div>
+                <div class="modal-row">
+                    <label for="todo-due-date">기한 (선택):</label>
+                    <div class="time-picker-container">
+                        <input type="date" id="todo-due-date" aria-label="기한 날짜 선택">
+                        <div class="time-selects">
+                            <select id="todo-due-hour" aria-label="시간">
+                                <option value="00">00시</option><option value="01">01시</option><option value="02">02시</option><option value="03">03시</option>
+                                <option value="04">04시</option><option value="05">05시</option><option value="06">06시</option><option value="07">07시</option>
+                                <option value="08">08시</option><option value="09">09시</option><option value="10">10시</option><option value="11">11시</option>
+                                <option value="12">12시</option><option value="13">13시</option><option value="14">14시</option><option value="15">15시</option>
+                                <option value="16">16시</option><option value="17">17시</option><option value="18">18시</option><option value="19">19시</option>
+                                <option value="20">20시</option><option value="21">21시</option><option value="22">22시</option><option value="23">23시</option>
+                            </select>
+                            <select id="todo-due-minute" aria-label="분">
+                                <option value="00">00분</option><option value="10">10분</option><option value="20">20분</option>
+                                <option value="30">30분</option><option value="40">40분</option><option value="50">50분</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="cancel-modal-btn" id="close-modal-btn">취소</button>
+                    <button type="submit" class="add-btn">목록에 추가</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 완료업무 모달 -->
+    <div class="modal-overlay" id="completed-modal" tabindex="-1">
+        <div class="modal-content completed-modal-content">
+            <div class="completed-modal-header">
+                <h2>완료업무</h2>
+                <button class="close-completed-btn" id="close-completed-btn" aria-label="닫기">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <nav class="category-tabs completed-tabs" id="completed-category-tabs">
+                <button class="tab-btn active" data-category="회사">회사</button>
+                <button class="tab-btn" data-category="집">집</button>
+                <button class="tab-btn" data-category="개인">개인</button>
+                <button class="tab-btn" data-category="기타">기타</button>
+            </nav>
+            <div id="completed-list-container">
+                <!-- rendered by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 하단 플로팅 버튼 그룹 -->
+    <div class="fab-group">
+        <button id="open-completed-btn" class="fab-btn secondary" aria-label="완료업무 보기">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+            <span>완료업무</span>
+        </button>
         <button id="open-modal-btn" class="fab-btn" aria-label="Add new task">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
             <span>새작업 추가</span>
         </button>
-    </main>
+    </div>
 
     <script type="module" src="main.js"></script>
 </body>
