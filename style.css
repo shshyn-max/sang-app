@@ -374,12 +374,19 @@ button.add-btn:active {
     animation: slideIn 0.4s ease forwards;
 }
 
-/* 플로팅 버튼 (새작업 추가) */
-.fab-btn {
+/* 플로팅 버튼 그룹 */
+.fab-group {
     position: fixed;
     bottom: 2rem;
     left: 50%;
     transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    z-index: 10;
+}
+
+.fab-btn {
     background: var(--accent-gradient);
     color: white;
     border: none;
@@ -394,7 +401,7 @@ button.add-btn:active {
     align-items: center;
     gap: 0.5rem;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    z-index: 10;
+    white-space: nowrap;
 }
 
 .fab-btn svg {
@@ -403,12 +410,25 @@ button.add-btn:active {
 }
 
 .fab-btn:hover {
-    transform: translateX(-50%) translateY(-3px);
+    transform: translateY(-3px);
     box-shadow: 0 15px 30px -5px rgba(139, 92, 246, 0.6);
 }
 
 .fab-btn:active {
-    transform: translateX(-50%) translateY(0);
+    transform: translateY(0);
+}
+
+.fab-btn.secondary {
+    background: rgba(30, 41, 59, 0.95);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+    color: var(--text-muted);
+}
+
+.fab-btn.secondary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.5);
+    color: var(--text-main);
 }
 
 /* 모달 레이어 */
@@ -512,6 +532,125 @@ button.add-btn:active {
 .cancel-modal-btn:hover {
     background: rgba(255, 255, 255, 0.05);
     color: var(--text-main);
+}
+
+/* 완료업무 모달 */
+.completed-modal-content {
+    max-height: 78vh;
+    display: flex;
+    flex-direction: column;
+    width: 90%;
+    max-width: 500px;
+}
+
+.completed-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+    flex-shrink: 0;
+}
+
+.completed-modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.close-completed-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.4rem;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.close-completed-btn:hover {
+    color: var(--text-main);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+#completed-list-container {
+    overflow-y: auto;
+    flex: 1;
+    padding-right: 2px;
+}
+
+/* 날짜 그룹 */
+.date-group {
+    margin-bottom: 0.5rem;
+}
+
+.date-group-header {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 12px;
+    padding: 0.7rem 1rem;
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+    text-align: left;
+}
+
+.date-group-header:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.date-group-count {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.06);
+    padding: 0.1rem 0.5rem;
+    border-radius: 20px;
+}
+
+.date-group-header .chevron-icon {
+    width: 16px;
+    height: 16px;
+    margin-left: auto;
+    flex-shrink: 0;
+    transition: transform 0.25s ease;
+    color: var(--text-muted);
+}
+
+.date-group-header.collapsed .chevron-icon {
+    transform: rotate(-90deg);
+}
+
+.date-group-list {
+    list-style: none;
+    padding: 0;
+    margin: 0.4rem 0 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.date-group-list.hidden {
+    display: none;
+}
+
+.empty-completed {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 2.5rem 0;
+    font-size: 0.95rem;
 }
 
 /* Responsiveness */
