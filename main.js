@@ -18,7 +18,6 @@ const form = document.getElementById('todo-form');
 const input = document.getElementById('todo-input');
 const dueDateInput = document.getElementById('todo-due-date');
 const dueHourInput = document.getElementById('todo-due-hour');
-const dueMinuteInput = document.getElementById('todo-due-minute');
 const categoryInput = document.getElementById('todo-category'); // New
 const list = document.getElementById('todo-list');
 const emptyState = document.getElementById('empty-state');
@@ -79,7 +78,7 @@ const chevronIcon = '<svg class="chevron-icon" xmlns="http://www.w3.org/2000/svg
 
 function formatDateTime(dateTimeStr) {
     if (!dateTimeStr) return '';
-    const options = { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+    const options = { month: 'short', day: 'numeric', hour: '2-digit' };
     return new Date(dateTimeStr).toLocaleString('ko-KR', options);
 }
 
@@ -95,15 +94,15 @@ function escapeHTML(str) {
 }
 
 function splitDateTime(dateTimeStr) {
-    if (!dateTimeStr) return { date: '', hour: '00', minute: '00' };
+    if (!dateTimeStr) return { date: '', hour: '00' };
     const [date, time] = dateTimeStr.split('T');
-    const [hour, minute] = (time || '00:00').split(':');
-    return { date, hour, minute };
+    const [hour] = (time || '00').split(':');
+    return { date, hour };
 }
 
-function joinDateTime(date, hour, minute) {
+function joinDateTime(date, hour) {
     if (!date) return '';
-    return `${date}T${hour}:${minute}`;
+    return `${date}T${hour}:00`;
 }
 
 function roundTo10Minutes(dateTimeStr) {
@@ -194,9 +193,6 @@ function renderTodos() {
                                 <select id="edit-due-hour-${todo.id}" class="edit-input">
                                     ${Array.from({length:24}, (_,i)=>String(i).padStart(2,'0')).map(h=>`<option value="${h}" ${dt.hour===h?'selected':''}>${h}시</option>`).join('')}
                                 </select>
-                                <select id="edit-due-minute-${todo.id}" class="edit-input">
-                                    ${['00','10','20','30','40','50'].map(m=>`<option value="${m}" ${dt.minute===m?'selected':''}>${m}분</option>`).join('')}
-                                </select>
                             </div>
                         </div>
                     </div>
@@ -248,9 +244,6 @@ function createCompletedItemHTML(todo) {
                         <div class="time-selects">
                             <select id="edit-due-hour-${todo.id}" class="edit-input">
                                 ${Array.from({length:24}, (_,i)=>String(i).padStart(2,'0')).map(h=>`<option value="${h}" ${dt.hour===h?'selected':''}>${h}시</option>`).join('')}
-                            </select>
-                            <select id="edit-due-minute-${todo.id}" class="edit-input">
-                                ${['00','10','20','30','40','50'].map(m=>`<option value="${m}" ${dt.minute===m?'selected':''}>${m}분</option>`).join('')}
                             </select>
                         </div>
                     </div>
@@ -440,8 +433,17 @@ onSnapshot(q, (snapshot) => {
         }
     });
 
-    // 생성일 기준 최신순 정렬 (미완료 목록용)
+    // 기한(due) 기준 오름차순 정렬, 기한이 없으면 생성일 기준 최신순 정렬
     todos.sort((a, b) => {
+        if (a.due && b.due) {
+            if (a.due < b.due) return -1;
+            if (a.due > b.due) return 1;
+        } else if (a.due) {
+            return -1;
+        } else if (b.due) {
+            return 1;
+        }
+
         const timeA = a.createdAt ? a.createdAt.toMillis() : Date.now();
         const timeB = b.createdAt ? b.createdAt.toMillis() : Date.now();
         return timeB - timeA;
@@ -543,14 +545,13 @@ window.saveEditTodo = async function(id) {
     const editInput = document.getElementById(`edit-input-${id}`);
     const editDueDateInput = document.getElementById(`edit-due-date-${id}`);
     const editDueHourInput = document.getElementById(`edit-due-hour-${id}`);
-    const editDueMinuteInput = document.getElementById(`edit-due-minute-${id}`);
     const editCategoryInput = document.getElementById(`edit-category-${id}`);
     if (!editInput) return;
 
     const newText = editInput.value.trim();
     let newDue = '';
     if (editDueDateInput && editDueDateInput.value) {
-        newDue = joinDateTime(editDueDateInput.value, editDueHourInput.value, editDueMinuteInput.value);
+        newDue = joinDateTime(editDueDateInput.value, editDueHourInput.value);
     }
 
     const newCategory = editCategoryInput ? editCategoryInput.value : '기타';
@@ -626,7 +627,7 @@ form.addEventListener('submit', (e) => {
     const text = input.value.trim();
     let due = '';
     if (dueDateInput.value) {
-        due = joinDateTime(dueDateInput.value, dueHourInput.value, dueMinuteInput.value);
+        due = joinDateTime(dueDateInput.value, dueHourInput.value);
     }
 
     const category = categoryInput.value;
@@ -639,7 +640,6 @@ form.addEventListener('submit', (e) => {
         input.value = '';
         dueDateInput.value = '';
         dueHourInput.value = '00';
-        dueMinuteInput.value = '00';
         // Reset category select
         if (currentCategory === '전체') {
             categoryInput.value = '';
@@ -667,7 +667,6 @@ const closeAddModal = () => {
     input.value = '';
     dueDateInput.value = '';
     dueHourInput.value = '00';
-    dueMinuteInput.value = '00';
 };
 
 closeModalBtn.addEventListener('click', closeAddModal);
