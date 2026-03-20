@@ -35,8 +35,41 @@ let todos = [];
 let editingId = null;
 let editingContext = 'main'; // 'main' | 'completed'
 let completedModalOpen = false;
-let currentCategory = '회사'; // Default main tab
-let currentCompletedCategory = '회사'; // Default completed tab
+let currentCategory = '전체'; // Default main tab
+let currentCompletedCategory = '전체'; // Default completed tab
+
+let isMonthlyView = true;
+let selectedYear = new Date().getFullYear().toString();
+let selectedMonth = String(new Date().getMonth() + 1).padStart(2, '0');
+
+function initMonthlyFilter() {
+    const yearSelect = document.getElementById('filter-year');
+    const monthSelect = document.getElementById('filter-month');
+    if (!yearSelect || !monthSelect) return;
+
+    // 연도 목록 생성 (최근 5년)
+    const currentYear = new Date().getFullYear();
+    yearSelect.innerHTML = '';
+    for (let i = 0; i < 5; i++) {
+        const year = currentYear - i;
+        const option = document.createElement('option');
+        option.value = year.toString();
+        option.textContent = `${year}년`;
+        yearSelect.appendChild(option);
+    }
+
+    yearSelect.value = selectedYear;
+    monthSelect.value = selectedMonth;
+
+    yearSelect.addEventListener('change', (e) => {
+        selectedYear = e.target.value;
+        renderCompletedTodos();
+    });
+    monthSelect.addEventListener('change', (e) => {
+        selectedMonth = e.target.value;
+        renderCompletedTodos();
+    });
+}
 
 const deleteIcon = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>';
 const editIcon = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>';
@@ -130,7 +163,7 @@ function formatDateKey(key) {
 // ── 메인 리스트 렌더링 ──────────────────────────────────────
 function renderTodos() {
     list.innerHTML = '';
-    const activeTodos = todos.filter(t => !t.completed && t.category === currentCategory);
+    const activeTodos = todos.filter(t => !t.completed && (currentCategory === '전체' || t.category === currentCategory));
 
     if (activeTodos.length === 0) {
         emptyState.classList.add('visible');
@@ -178,7 +211,10 @@ function renderTodos() {
                         <span class="checkmark"></span>
                     </label>
                     <div class="todo-content">
-                        <span class="todo-text">${escapeHTML(todo.text)}</span>
+                        <div class="todo-main-row">
+                            <span class="todo-text">${escapeHTML(todo.text)}</span>
+                            ${currentCategory === '전체' ? `<span class="todo-category-badge">${escapeHTML(todo.category)}</span>` : ''}
+                        </div>
                         ${dueFormatted ? `<span class="todo-due ${overdueClass}">기한: ${escapeHTML(dueFormatted)}</span>` : ''}
                     </div>
                     <div class="action-buttons">
@@ -233,7 +269,10 @@ function createCompletedItemHTML(todo) {
                 <span class="checkmark"></span>
             </label>
             <div class="todo-content">
-                <span class="todo-text">${escapeHTML(todo.text)}</span>
+                <div class="todo-main-row">
+                    <span class="todo-text">${escapeHTML(todo.text)}</span>
+                    ${currentCompletedCategory === '전체' ? `<span class="todo-category-badge">${escapeHTML(todo.category)}</span>` : ''}
+                </div>
                 ${dueFormatted ? `<span class="todo-due">${escapeHTML(dueFormatted)}</span>` : ''}
             </div>
             <div class="action-buttons">
@@ -245,52 +284,134 @@ function createCompletedItemHTML(todo) {
 
 function renderCompletedTodos() {
     const container = document.getElementById('completed-list-container');
-    const completedTodos = todos.filter(t => t.completed && t.category === currentCompletedCategory);
+    const completedTodos = todos.filter(t => {
+        const matchesCategory = currentCompletedCategory === '전체' || t.category === currentCompletedCategory;
+        if (!t.completed || !matchesCategory) return false;
+
+        if (isMonthlyView) {
+            const dateKey = getDateKey(t); // YYYY-MM-DD
+            if (selectedMonth === 'all') {
+                return dateKey.startsWith(selectedYear);
+            }
+            return dateKey.startsWith(`${selectedYear}-${selectedMonth}`);
+        }
+        return true;
+    });
 
     if (completedTodos.length === 0) {
         container.innerHTML = '<p class="empty-completed">완료된 업무가 없습니다.</p>';
         return;
     }
 
-    // 날짜별 그룹핑
-    const groups = {};
-    completedTodos.forEach(todo => {
-        const key = getDateKey(todo);
-        if (!groups[key]) groups[key] = { todos: [], maxTimestamp: 0 };
-        groups[key].todos.push(todo);
-        const ts = getTimestamp(todo);
-        if (ts > groups[key].maxTimestamp) groups[key].maxTimestamp = ts;
-    });
-
-    // 그룹을 날짜역순(최신 날짜 상단)으로 정렬
-    const sortedKeys = Object.keys(groups).sort((a, b) => b.localeCompare(a));
-
+    // 그룹화 로직
     container.innerHTML = '';
 
-    sortedKeys.forEach((key, index) => {
-        const isFirst = index === 0;
-        const group = groups[key];
+    const currentYearStr = new Date().getFullYear().toString();
+    const currentMonthStr = String(new Date().getMonth() + 1).padStart(2, '0');
+    const isShowingCurrentHistorical = selectedYear === currentYearStr && selectedMonth === currentMonthStr;
 
-        // 그룹 내 항목도 최신순 정렬
-        group.todos.sort((a, b) => getTimestamp(b) - getTimestamp(a));
+    if (isMonthlyView && selectedMonth === 'all') {
+        const monthGroups = {};
+        completedTodos.forEach(todo => {
+            const dateKey = getDateKey(todo);
+            const monthKey = dateKey.slice(0, 7);
+            if (!monthGroups[monthKey]) monthGroups[monthKey] = {};
+            if (!monthGroups[monthKey][dateKey]) monthGroups[monthKey][dateKey] = { todos: [], maxTimestamp: 0 };
+            
+            monthGroups[monthKey][dateKey].todos.push(todo);
+            const ts = getTimestamp(todo);
+            if (ts > monthGroups[monthKey][dateKey].maxTimestamp) monthGroups[monthKey][dateKey].maxTimestamp = ts;
+        });
 
-        const todosHTML = group.todos.map(t => createCompletedItemHTML(t)).join('');
+        const sortedMonthKeys = Object.keys(monthGroups).sort((a, b) => b.localeCompare(a));
+        let totalIndex = 0;
 
-        const groupEl = document.createElement('div');
-        groupEl.className = 'date-group';
-        groupEl.innerHTML = `
-            <button class="date-group-header ${isFirst ? 'expanded' : 'collapsed'}" onclick="toggleDateGroup(this)">
-                <span>${formatDateKey(key)}</span>
-                <span class="date-group-count">${group.todos.length}개</span>
-                ${chevronIcon}
-            </button>
-            <ul class="date-group-list ${isFirst ? '' : 'hidden'}">
-                ${todosHTML}
-            </ul>`;
-        container.appendChild(groupEl);
-    });
+        sortedMonthKeys.forEach((mKey, mIndex) => {
+            const isMonthNow = mKey === `${currentYearStr}-${currentMonthStr}`;
+            // 이번달이 아닐 때는 무조건 닫힘 (유저 요청)
+            const isMonthFirst = isShowingCurrentHistorical && mIndex === 0;
+            const shouldExpandMonth = isShowingCurrentHistorical ? isMonthFirst : false;
+            
+            const [y, m] = mKey.split('-');
+            
+            const monthGroupEl = document.createElement('div');
+            monthGroupEl.className = 'month-group';
+            monthGroupEl.innerHTML = `
+                <button class="month-group-header ${shouldExpandMonth ? 'expanded' : 'collapsed'}" onclick="toggleMonthGroup(this)">
+                    <span>${y}년 ${parseInt(m)}월</span>
+                    ${chevronIcon}
+                </button>
+                <div class="month-group-list ${shouldExpandMonth ? '' : 'hidden'}"></div>
+            `;
+            container.appendChild(monthGroupEl);
+            const monthListContainer = monthGroupEl.querySelector('.month-group-list');
 
-    // 편집 중인 항목이 있으면 포커스
+            const dayGroups = monthGroups[mKey];
+            const sortedDayKeys = Object.keys(dayGroups).sort((a, b) => b.localeCompare(a));
+
+            sortedDayKeys.forEach((key) => {
+                const group = dayGroups[key];
+                // 이번달이 아닐 때는 무조건 닫힘 (유저 요청)
+                const isFirst = isShowingCurrentHistorical && totalIndex === 0;
+                totalIndex++;
+
+                const containsEditingId = editingId && group.todos.some(t => t.id === editingId);
+                const isExpanded = (isShowingCurrentHistorical && isFirst) || containsEditingId;
+
+                group.todos.sort((a, b) => getTimestamp(b) - getTimestamp(a));
+                const todosHTML = group.todos.map(t => createCompletedItemHTML(t)).join('');
+
+                const groupEl = document.createElement('div');
+                groupEl.className = 'date-group';
+                groupEl.innerHTML = `
+                    <button class="date-group-header ${isExpanded ? 'expanded' : 'collapsed'}" onclick="toggleDateGroup(this)">
+                        <span>${formatDateKey(key)}</span>
+                        <span class="date-group-count">${group.todos.length}개</span>
+                        ${chevronIcon}
+                    </button>
+                    <ul class="date-group-list ${isExpanded ? '' : 'hidden'}">
+                        ${todosHTML}
+                    </ul>`;
+                monthListContainer.appendChild(groupEl);
+            });
+        });
+    } else {
+        const groups = {};
+        completedTodos.forEach(todo => {
+            const key = getDateKey(todo);
+            if (!groups[key]) groups[key] = { todos: [], maxTimestamp: 0 };
+            groups[key].todos.push(todo);
+            const ts = getTimestamp(todo);
+            if (ts > groups[key].maxTimestamp) groups[key].maxTimestamp = ts;
+        });
+
+        const sortedKeys = Object.keys(groups).sort((a, b) => b.localeCompare(a));
+        sortedKeys.forEach((key, index) => {
+            // 이번달이 아닐 때는 무조건 닫힘 (유저 요청: 이번달이 아닌달은 아코디온이 기본적으로 닫히도록)
+            const isFirst = isShowingCurrentHistorical && index === 0;
+            const group = groups[key];
+            const containsEditingId = editingId && group.todos.some(t => t.id === editingId);
+            const isExpanded = isFirst || containsEditingId;
+
+            group.todos.sort((a, b) => getTimestamp(b) - getTimestamp(a));
+            const todosHTML = group.todos.map(t => createCompletedItemHTML(t)).join('');
+
+            const groupEl = document.createElement('div');
+            groupEl.className = 'date-group';
+            groupEl.innerHTML = `
+                <button class="date-group-header ${isExpanded ? 'expanded' : 'collapsed'}" onclick="toggleDateGroup(this)">
+                    <span>${formatDateKey(key)}</span>
+                    <span class="date-group-count">${group.todos.length}개</span>
+                    ${chevronIcon}
+                </button>
+                <ul class="date-group-list ${isExpanded ? '' : 'hidden'}">
+                    ${todosHTML}
+                </ul>`;
+            container.appendChild(groupEl);
+        });
+    }
+
+    // 편집 중인 항목 포커스 (기존 로직 유지)
     if (editingId && editingContext === 'completed') {
         setTimeout(() => {
             const editInput = document.getElementById(`edit-input-${editingId}`);
@@ -451,13 +572,49 @@ window.saveEditTodo = async function(id) {
     }
 };
 
-// ── 날짜 그룹 펼침/접기 ────────────────────────────────────
+// ── 그룹 펼침/접기 ────────────────────────────────────
+window.toggleMonthGroup = function(btn) {
+    const listEl = btn.nextElementSibling;
+    const isExpanding = !btn.classList.contains('expanded');
+
+    // Accordion: 다른 모든 월 그룹 닫기
+    const container = document.getElementById('completed-list-container');
+    const allMonthHeaders = container.querySelectorAll('.month-group-header');
+    const allMonthLists = container.querySelectorAll('.month-group-list');
+
+    allMonthHeaders.forEach(h => {
+        h.classList.remove('expanded');
+        h.classList.add('collapsed');
+    });
+    allMonthLists.forEach(l => {
+        l.classList.add('hidden');
+    });
+
+    if (isExpanding) {
+        btn.classList.remove('collapsed');
+        btn.classList.add('expanded');
+        listEl.classList.remove('hidden');
+    }
+};
+
 window.toggleDateGroup = function(btn) {
     const listEl = btn.nextElementSibling;
-    if (btn.classList.contains('expanded')) {
-        btn.classList.replace('expanded', 'collapsed');
-        listEl.classList.add('hidden');
-    } else {
+    const isExpanding = !btn.classList.contains('expanded');
+
+    // Accordion: 같은 레벨의 다른 모든 날짜 그룹 닫기
+    const parentContainer = btn.closest('.month-group-list') || document.getElementById('completed-list-container');
+    const allHeaders = parentContainer.querySelectorAll('.date-group-header');
+    const allLists = parentContainer.querySelectorAll('.date-group-list');
+
+    allHeaders.forEach(h => {
+        h.classList.remove('expanded');
+        h.classList.add('collapsed');
+    });
+    allLists.forEach(l => {
+        l.classList.add('hidden');
+    });
+
+    if (isExpanding) {
         btn.classList.replace('collapsed', 'expanded');
         listEl.classList.remove('hidden');
     }
@@ -474,17 +631,33 @@ form.addEventListener('submit', (e) => {
 
     const category = categoryInput.value;
     if (text !== '') {
+        if (!category) {
+            alert("카테고리를 선택해주세요.");
+            return;
+        }
         addTodo(text, due, category);
         input.value = '';
         dueDateInput.value = '';
         dueHourInput.value = '00';
         dueMinuteInput.value = '00';
-        categoryInput.value = '기타';
+        // Reset category select
+        if (currentCategory === '전체') {
+            categoryInput.value = '';
+        } else {
+            categoryInput.value = currentCategory;
+        }
         addModal.classList.remove('show');
     }
 });
 
 openModalBtn.addEventListener('click', () => {
+    // Pre-select category based on current tab
+    if (currentCategory === '전체') {
+        categoryInput.value = ""; // Placeholder "선택해주세요"
+    } else {
+        categoryInput.value = currentCategory;
+    }
+    
     addModal.classList.add('show');
     setTimeout(() => input.focus(), 100);
 });
@@ -507,8 +680,20 @@ addModal.addEventListener('click', (e) => {
 openCompletedBtn.addEventListener('click', () => {
     completedModalOpen = true;
     completedModal.classList.add('show');
+    
+    // 디폴트는 오늘이 속한 연도와 달 (유저 요청)
+    selectedYear = new Date().getFullYear().toString();
+    selectedMonth = String(new Date().getMonth() + 1).padStart(2, '0');
+    
+    initMonthlyFilter(); // Ensure selectors are ready
     renderCompletedTodos();
 });
+
+const toggleMonthlyBtn = document.getElementById('toggle-monthly-view');
+const monthlyFilterRow = document.getElementById('monthly-filter-row');
+
+// Note: No toggle listener needed as it's now permanent.
+// Button has been removed from HTML.
 
 const closeCompletedModal = () => {
     completedModalOpen = false;
