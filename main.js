@@ -657,6 +657,13 @@ openModalBtn.addEventListener('click', () => {
     } else {
         categoryInput.value = currentCategory;
     }
+
+    // Default due date to today (YYYY-MM-DD)
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    dueDateInput.value = `${year}-${month}-${day}`;
     
     addModal.classList.add('show');
     setTimeout(() => input.focus(), 100);
@@ -680,6 +687,17 @@ openCompletedBtn.addEventListener('click', () => {
     completedModalOpen = true;
     completedModal.classList.add('show');
     
+    // Sync current category
+    currentCompletedCategory = currentCategory;
+    const completedTabs = document.querySelectorAll('#completed-category-tabs .tab-btn');
+    completedTabs.forEach(btn => {
+        if (btn.getAttribute('data-category') === currentCompletedCategory) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
     // 디폴트는 오늘이 속한 연도와 달 (유저 요청)
     selectedYear = new Date().getFullYear().toString();
     selectedMonth = String(new Date().getMonth() + 1).padStart(2, '0');
