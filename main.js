@@ -1,5 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
 import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyAlpQVSMkvLTLBJIJDLJuzAiX03eqWvEKE",
@@ -12,7 +13,11 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const todosCollectionRef = collection(db, 'todos');
+const auth = getAuth(app);
+
+let currentUser = null;
+let todosCollectionRef = null;
+let unsubscribe = null; // 리얼타임 리스너 해제용
 
 const form = document.getElementById('todo-form');
 const input = document.getElementById('todo-input');
@@ -421,48 +426,64 @@ function refreshRender() {
     if (completedModalOpen) renderCompletedTodos();
 }
 
-// ── Firestore 실시간 리스너 ─────────────────────────────────
-const q = query(todosCollectionRef);
-onSnapshot(q, (snapshot) => {
-    todos = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+// ── Auth & Firestore 실시간 리스너 ─────────────────────────────────
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        currentUser = user;
+        // 사용자별 경로로 참조 변경: users/{uid}/todos
+        todosCollectionRef = collection(db, 'users', user.uid, 'todos');
+        
+        // 기존 리스너가 있다면 해제
+        if (unsubscribe) unsubscribe();
 
-    // 마이그레이션: category가 없는 데이터 '기타'로 업데이트
-    todos.forEach(todo => {
-        if (!todo.category) {
-            updateDoc(doc(db, 'todos', todo.id), { category: '기타' });
-        }
-    });
+        const q = query(todosCollectionRef);
+        unsubscribe = onSnapshot(q, (snapshot) => {
+            todos = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
 
-    // 기한(due) 기준 오름차순 정렬, 기한이 없으면 생성일 기준 최신순 정렬
-    todos.sort((a, b) => {
-        if (a.due && b.due) {
-            if (a.due < b.due) return -1;
-            if (a.due > b.due) return 1;
-        } else if (a.due) {
-            return -1;
-        } else if (b.due) {
-            return 1;
-        }
+            // 마이그레이션: category가 없는 데이터 '기타'로 업데이트
+            todos.forEach(todo => {
+                if (!todo.category) {
+                    updateDoc(doc(db, 'users', currentUser.uid, 'todos', todo.id), { category: '기타' });
+                }
+            });
 
-        const timeA = a.createdAt ? a.createdAt.toMillis() : Date.now();
-        const timeB = b.createdAt ? b.createdAt.toMillis() : Date.now();
-        return timeB - timeA;
-    });
+            // 기한(due) 기준 오름차순 정렬, 기한이 없으면 생성일 기준 최신순 정렬
+            todos.sort((a, b) => {
+                if (a.due && b.due) {
+                    if (a.due < b.due) return -1;
+                    if (a.due > b.due) return 1;
+                } else if (a.due) {
+                    return -1;
+                } else if (b.due) {
+                    return 1;
+                }
 
-    refreshRender();
-}, (error) => {
-    console.error("Error fetching data:", error);
-    if (error.code === 'failed-precondition') {
-        alert("Firestore 인덱스 생성 오류: " + error.message);
-    } else if (error.code === 'permission-denied') {
-        alert("Firestore 권한 오류입니다. Rules 탭에서 읽기/쓰기 권한을 확인해주세요.");
+                const timeA = a.createdAt ? a.createdAt.toMillis() : Date.now();
+                const timeB = b.createdAt ? b.createdAt.toMillis() : Date.now();
+                return timeB - timeA;
+            });
+
+            refreshRender();
+        }, (error) => {
+            console.error("Error fetching data:", error);
+            if (error.code === 'permission-denied') {
+                alert("Firestore 권한 오류입니다. Rules 탭에서 읽기/쓰기 권한을 확인해주세요.");
+            } else {
+                alert("데이터를 불러오는데 실패했습니다: " + error.message);
+            }
+        });
     } else {
-        alert("데이터를 불러오는데 실패했습니다: " + error.message);
+        // 유저가 없는 경우 익명 로그인 시도
+        signInAnonymously(auth).catch((error) => {
+            console.error("Anonymous sign-in failed:", error);
+            alert("로그인에 실패했습니다. 페이지를 새로고침 해주세요.");
+        });
     }
 });
 
 // ── Firestore CRUD ──────────────────────────────────────────
 async function addTodo(text, due, category) {
+    if (!todosCollectionRef) return;
     try {
         await addDoc(todosCollectionRef, {
             text,
@@ -478,7 +499,8 @@ async function addTodo(text, due, category) {
 }
 
 window.toggleTodo = async function(id, newStatus) {
-    const todoDoc = doc(db, 'todos', id);
+    if (!currentUser) return;
+    const todoDoc = doc(db, 'users', currentUser.uid, 'todos', id);
     try {
         const updateData = { completed: newStatus };
         updateData.completedAt = newStatus ? serverTimestamp() : null;
@@ -489,12 +511,13 @@ window.toggleTodo = async function(id, newStatus) {
 };
 
 window.deleteTodo = async function(id) {
+    if (!currentUser) return;
     const element = document.getElementById(`todo-${id}`) || document.getElementById(`completed-${id}`);
     if (element) {
         element.style.animation = 'scaleOut 0.3s forwards';
     }
     setTimeout(async () => {
-        const todoDoc = doc(db, 'todos', id);
+        const todoDoc = doc(db, 'users', currentUser.uid, 'todos', id);
         try {
             await deleteDoc(todoDoc);
         } catch (e) {
@@ -564,7 +587,8 @@ window.saveEditTodo = async function(id) {
     editingId = null;
     refreshRender();
 
-    const todoDoc = doc(db, 'todos', id);
+    if (!currentUser) return;
+    const todoDoc = doc(db, 'users', currentUser.uid, 'todos', id);
     try {
         await updateDoc(todoDoc, { text: newText, due: newDue, category: newCategory });
     } catch (e) {
