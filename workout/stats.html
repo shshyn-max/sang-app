@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>프로 타바타 - 성장 분석 리포트</title>
+    <link rel="apple-touch-icon" href="icon.png">
+    <style>
+        :root { 
+            --work-color: #ff4757; --rest-color: #2ed573; --bg-color: #121212; 
+            --card-bg: rgba(25, 25, 25, 0.8);
+            --border-style: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        body { font-family: 'Pretendard', -apple-system, sans-serif; background-color: var(--bg-color); color: white; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        .container { width: 100%; max-width: 500px; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; width: 100%; }
+        .header h2 { margin: 0; font-size: 1.4rem; letter-spacing: -1px; }
+        .btn-back { background-color: #ffffff; color: #000000 !important; text-decoration: none; font-size: 0.75rem; font-weight: 800; padding: 6px 14px; border-radius: 10px; box-shadow: 0 4px 10px rgba(255,255,255,0.1); transition: 0.2s; }
+
+        .month-section { margin-bottom: 25px; background: rgba(255,255,255,0.02); border-radius: 20px; overflow: hidden; border: var(--border-style); }
+        
+        .month-header { padding: 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); }
+        .month-title { font-size: 1.1rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 8px; }
+        .toggle-icon { font-size: 0.8rem; color: #666; transition: transform 0.3s; }
+        .month-section.open .toggle-icon { transform: rotate(180deg); }
+
+        .month-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 20px 20px 20px; }
+        .month-card { background: var(--card-bg); border: var(--border-style); padding: 12px; border-radius: 12px; }
+        .month-card span { font-size: 0.65rem; color: #888; display: block; margin-bottom: 4px; }
+        .month-card b { font-size: 1.1rem; color: var(--rest-color); }
+        
+        .growth-tag { font-size: 0.6rem; font-weight: bold; padding: 2px 5px; border-radius: 4px; margin-top: 4px; display: inline-block; }
+        .growth-up { background: rgba(46, 213, 115, 0.15); color: #2ed573; }
+        .growth-down { background: rgba(255, 71, 87, 0.15); color: #ff4757; }
+        .growth-zero { background: rgba(255, 255, 255, 0.08); color: #777; }
+
+        .month-details { display: none; padding: 0 20px 20px 20px; border-top: 1px solid rgba(255,255,255,0.05); }
+        .month-section.open .month-details { display: block; }
+
+        .saved-item { background: var(--card-bg); border: var(--border-style); padding: 15px 18px; border-radius: 18px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .saved-info b { font-size: 0.95rem; display: block; margin-bottom: 4px; color: #fff; }
+        .saved-info span { font-size: 0.75rem; color: #888; }
+        
+        .saved-btns { display: flex; align-items: center; gap: 15px; }
+        .time-badge { color: #2ed573; font-weight: bold; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+        .btn-del-text { color: #ff4757; background: none; border: none; font-size: 0.85rem; font-weight: bold; cursor: pointer; padding: 0; }
+        
+        .empty-state { text-align: center; color: #555; padding: 50px 0; font-style: italic; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h2>📈 성장 분석 리포트</h2>
+        <a href="index.html" class="btn-back">이전으로</a>
+    </div>
+
+    <div id="statsContent">
+        <div class="empty-state">데이터를 분석하는 중...</div>
+    </div>
+</div>
+
+<script type="module" src="stats.js"></script>
+</body>
+</html>

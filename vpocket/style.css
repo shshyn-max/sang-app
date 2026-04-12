@@ -1,0 +1,113 @@
+:root {
+    --primary: #4a90e2;
+    --urgent: #ff4757;
+    --bg: #000000;
+    --container-bg: #111111;
+    --text-light: #ffffff;
+    --sub-text: #747d8c;
+    --border: #2f3542;
+    --input-bg: #1a1a1a;
+    --add-btn-bg: #1e272e;
+    --category-bg: #e1f5fe;
+    --category-text: #0288d1;
+}
+
+body {
+    font-family: -apple-system, system-ui, sans-serif;
+    background-color: var(--bg); color: var(--text-light);
+    margin: 0; padding: 20px; display: flex; justify-content: center; min-height: 100vh;
+}
+
+.container {
+    width: 100%; max-width: 480px; background-color: var(--container-bg);
+    padding: 25px; border-radius: 24px; box-sizing: border-box; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.main-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+.main-header h2 { margin: 0; font-size: 1.5rem; font-weight: 700; cursor: pointer; }
+.btn-archive-link { background: #2d3436; color: #dfe6e9; border: 1px solid var(--border); padding: 6px 12px; border-radius: 10px; font-size: 0.75rem; cursor: pointer; font-weight: 600; }
+
+h3 { color: var(--text-light); letter-spacing: -0.5px; margin-top: 0; }
+label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.85rem; color: var(--sub-text); }
+
+input, select {
+    appearance: none; -webkit-appearance: none;
+    width: 100%; max-width: 100%; padding: 14px; margin-bottom: 15px; border-radius: 12px; border: 1px solid var(--border);
+    box-sizing: border-box; background-color: var(--input-bg); color: var(--text-light); font-size: 1rem; color-scheme: dark;
+}
+
+input[type="file"] { text-align: right; border: none; background: transparent; color: var(--sub-text); padding: 10px 0; }
+input[type="file"]::-webkit-file-upload-button {
+    float: right; margin-left: 10px; padding: 8px 16px; border-radius: 8px;
+    border: 1px solid var(--border); background-color: var(--input-bg); color: var(--text-light); font-weight: bold; cursor: pointer;
+}
+
+/* style.css 수정 및 추가 */
+
+input[type="date"] {
+    width: 100% !important; /* 가로 너비 강제 고정 */
+    max-width: 100%;
+    box-sizing: border-box; /* 패딩이 너비에 포함되도록 설정 */
+    display: block;
+    min-height: 50px; /* 아이폰에서 터치하기 편한 높이 확보 */
+    line-height: normal; /* 텍스트 수직 중앙 정렬 보조 */
+    padding-top: 10px;    /* 위아래 여백을 명시적으로 조절 */
+    padding-bottom: 10px;
+    -webkit-appearance: none; /* 아이폰 기본 스타일 제거 */
+}
+
+/* 아이폰 Safari에서 날짜 입력창 내부 여백 조정 */
+input[type="date"]::-webkit-date-and-time-value {
+    text-align: left;
+    min-height: 1.2em; /* 텍스트가 잘리지 않게 높이 조절 */
+}
+
+/* 추가 팁: 전체 input 요소의 너비 이탈 방지 */
+input, select {
+    box-sizing: border-box; /* 모든 입력창에 적용 */
+}
+
+.btn-white { width: 100%; padding: 14px; margin-bottom: 10px; border-radius: 12px; border: none; font-size: 1rem; font-weight: bold; cursor: pointer; background-color: #ffffff; color: #000000; }
+.btn-add-voucher {
+    width: 100%; padding: 16px; margin-top: 10px; border-radius: 18px; border: 1px dashed #57606f;
+    background-color: var(--add-btn-bg); color: #ffffff; font-size: 1rem; font-weight: 600; cursor: pointer;
+}
+
+/* 📋 목록 카드 및 텍스트 블랙 강제 설정 */
+.list-card { background: #ffffff !important; padding: 18px; border-radius: 18px; margin-bottom: 18px; display: flex; flex-direction: column; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+.card-black-text { color: #000000 !important; }
+.category-tag { font-size: 0.65rem; background: var(--category-bg); color: var(--category-text); padding: 2px 8px; border-radius: 6px; font-weight: 700; border: 1px solid #b3e5fc; }
+
+.list-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; width: 100%; }
+.info-left-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
+.list-info-top { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+.title-row { display: flex; align-items: center; gap: 8px; width: 100%; flex-wrap: wrap; }
+.title-actions { display: flex; gap: 4px; margin-top: 2px; }
+.btn-mini { background: #f1f2f6; border: 1px solid #dcdde1; color: #2f3542; padding: 2px 7px; border-radius: 4px; font-size: 0.65rem; cursor: pointer; font-weight: 600; }
+.btn-mini.done { background: #e8f5e9; color: #2e7d32; border-color: #c8e6c9; }
+
+/* 사용내역 펼침 박스 */
+.list-history-box { background: #f8f9fa; border-radius: 10px; padding: 10px; margin: 8px 0 12px 0; font-size: 0.8rem; color: #57606f; }
+.history-summary { display: flex; justify-content: space-between; font-weight: 600; }
+.history-full { border-top: 1px solid #e1e4e8; margin-top: 8px; padding-top: 8px; }
+.history-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid #f1f2f6; }
+.history-row:last-child { border-bottom: none; }
+.btn-history-mini { background: none; border: none; color: #a4b0be; cursor: pointer; font-size: 0.7rem; padding: 2px 4px; font-weight: 500; }
+.btn-expand { background: none; border: none; color: var(--primary); font-size: 0.75rem; cursor: pointer; padding: 5px 0; font-weight: bold; width: 100%; text-align: center; }
+
+.list-actions-bottom { display: flex; gap: 8px; border-top: 1px solid #f1f2f6; padding-top: 12px; }
+.btn-bottom { flex: 1; padding: 11px; border-radius: 10px; border: none; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+.btn-view { background: #f1f2f6; color: #2f3542; }
+.btn-input { background: var(--primary); color: #ffffff; }
+
+/* 헤더 공통 레이아웃 */
+.header-relative { position: relative; display: flex; justify-content: center; align-items: center; margin-bottom: 30px; min-height: 35px; }
+.btn-nav-right {
+    position: absolute; right: 0; background: rgba(255,255,255,0.1); color: white;
+    border: 1px solid rgba(255,255,255,0.2); padding: 6px 15px; border-radius: 20px;
+    font-size: 13px; font-weight: bold; cursor: pointer; backdrop-filter: blur(5px);
+}
+
+@keyframes blink { 50% { opacity: 0.4; } }
+.hidden { display: none !important; }
+.archive-card { opacity: 0.8; filter: grayscale(0.3); }

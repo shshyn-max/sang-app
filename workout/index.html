@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>프로 타바타 v8.8.23</title>
+    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+<div class="main-layout">
+    <div class="timer-section container">
+        <div class="settings" id="settingsArea">
+            <div style="text-align: center;"><label>운동</label><input type="text" id="inputWork"></div>
+            <div style="text-align: center;"><label>휴식</label><input type="text" id="inputRest"></div>
+            <div style="text-align: center;"><label>세트</label><input type="text" id="inputSets"></div>
+            <div style="text-align: center;"><label>라운드</label><input type="text" id="inputRounds"></div>
+        </div>
+        <div class="info-panel">
+            <div class="info-item"><span>PROGRESS (%)</span><b id="progressDisplay">0 / 0 (0%)</b></div>
+            <div class="info-item"><span>TOTAL REMAIN</span><b id="totalTimeDisplay">00:00</b></div>
+        </div>
+        <div id="status">READY</div>
+        <div id="timer">10</div>
+        <div id="finishMsg" class="finish-msg">You did a great Job</div>
+        
+        <button id="finishBtn" onclick="completeWorkout()">
+            <b>해냈어요!</b>
+            <span>완료하기</span>
+        </button>
+
+        <div class="controls" id="normalControls">
+            <button class="btn-toggle" id="toggleBtn">▶ START</button>
+            <button class="btn-right" id="rightBtn">⚙︎ 운동세팅</button>
+        </div>
+    </div>
+    
+    <div class="data-section container">
+        <div id="presetWrapper">
+            <div class="section-header"><h3>최근 세팅</h3></div>
+            <div id="presetList"></div>
+        </div>
+        <div id="historyWrapper">
+            <div class="section-header"><h3>최근 기록</h3><a href="stats.html" class="btn-stats-link">📊 통계 보고서</a></div>
+            <div id="historyList"></div>
+        </div>
+    </div>
+</div>
+
+<script type="module" src="main.js"></script>
+</body>
+</html>
