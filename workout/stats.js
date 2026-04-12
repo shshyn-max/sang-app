@@ -2,7 +2,14 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getFirestore, collection, getDocs, query, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-const firebaseConfig = { apiKey: "AIzaSyBAwk8ms_RhgV3I4eVBnWqMKc7UBwk3vm8", authDomain: "my-tabata-web.firebaseapp.com", projectId: "my-tabata-web", storageBucket: "my-tabata-web.firebasestorage.app", messagingSenderId: "154823281802", appId: "1:154823281802:web:21e51b45843e7e4cb3f173" };
+const firebaseConfig = {
+  apiKey: "AIzaSyBAwk8ms_RhgV3I4eVBnWqMKc7UBwk3vm8",
+  authDomain: "my-tabata-web.firebaseapp.com",
+  projectId: "my-tabata-web",
+  storageBucket: "my-tabata-web.firebasestorage.app",
+  messagingSenderId: "154823281802",
+  appId: "1:154823281802:web:21e51b45843e7e4cb3f173"
+};
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
