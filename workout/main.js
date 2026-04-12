@@ -133,6 +133,14 @@ async function finishWorkout() {
     confetti();
 
     try {
+        const user = auth.currentUser;
+        console.log("저장 시도 중... 현재 유저:", user ? user.uid : "비로그인");
+        
+        if (!user) {
+            console.log("로그인 정보 없음, 재시도 중...");
+            await signInAnonymously(auth);
+        }
+
         await addDoc(collection(db, "workout_history"), { 
             work: config.work, 
             rest: config.rest, 
@@ -141,10 +149,12 @@ async function finishWorkout() {
             date: new Date().toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }), 
             createdAt: now 
         });
+        console.log("데이터베이스 저장 성공!");
         renderHistory(); 
     } catch (e) {
-        console.error("결과 저장 실패:", e);
-        alert("기록 저장 중 오류가 발생했습니다: " + e.message);
+        console.error("결과 저장 실패 상세:", e);
+        const user = auth.currentUser;
+        alert(`[저장 실패] 계정상태: ${user ? '익명로그인됨' : '비로그인'}\n오류내용: ${e.message}\n익명로그인이 켜져있는지 콘솔을 확인해주세요.`);
     }
 }
 
