@@ -1,6 +1,6 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit, deleteDoc, doc, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit, deleteDoc, doc, where } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBAwk8ms_RhgV3I4eVBnWqMKc7UBwk3vm8",
@@ -15,7 +15,13 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 // 익명 로그인 후 앱 초기화
-signInAnonymously(auth).catch(e => console.error("익명 로그인 실패:", e));
+signInAnonymously(auth)
+    .then(() => console.log("익명 로그인 성공"))
+    .catch(e => {
+        console.error("익명 로그인 실패:", e);
+        alert("Firebase 인증 오류: " + e.message + "\n콘솔 설정을 확인해주세요.");
+    });
+
 onAuthStateChanged(auth, user => { if (user) { renderPresets().then(() => renderHistory()); } });
 
 let timerId = null, config = { work: 20, rest: 10, sets: 4, rounds: 2, prepare: 10 };
@@ -120,8 +126,26 @@ async function finishWorkout() {
     timerDisplay.style.display = "none"; finishMsgDisplay.style.display = "block";
     totalSecondsLeft = 0; totalDisplay.innerText = formatTime(0);
     const now = Date.now();
-    await addDoc(collection(db, "workout_history"), { work: config.work, rest: config.rest, sets: config.sets, rounds: config.rounds, date: new Date().toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }), createdAt: now });
-    renderHistory(); confetti(); normalControls.style.display = "none"; finishBtn.style.display = "flex";
+    
+    // UI 우선 노출
+    normalControls.style.display = "none"; 
+    finishBtn.style.display = "flex";
+    confetti();
+
+    try {
+        await addDoc(collection(db, "workout_history"), { 
+            work: config.work, 
+            rest: config.rest, 
+            sets: config.sets, 
+            rounds: config.rounds, 
+            date: new Date().toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }), 
+            createdAt: now 
+        });
+        renderHistory(); 
+    } catch (e) {
+        console.error("결과 저장 실패:", e);
+        alert("기록 저장 중 오류가 발생했습니다: " + e.message);
+    }
 }
 
 window.completeWorkout = () => { performReset(); document.getElementById('historyWrapper').scrollIntoView({ behavior: 'smooth' }); };

@@ -1,6 +1,6 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, getDocs, query, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+import { getFirestore, collection, getDocs, query, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBAwk8ms_RhgV3I4eVBnWqMKc7UBwk3vm8",
@@ -15,7 +15,13 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 // 익명 로그인 후 통계 로드
-signInAnonymously(auth).catch(e => console.error("익명 로그인 실패:", e));
+signInAnonymously(auth)
+    .then(() => console.log("익명 로그인 성공"))
+    .catch(e => {
+        console.error("익명 로그인 실패:", e);
+        alert("Firebase 인증 오류: " + e.message);
+    });
+
 onAuthStateChanged(auth, user => { if (user) { loadStats(); } });
 
 window.toggleMonth = (header) => { header.parentElement.classList.toggle('open'); };
@@ -44,73 +50,78 @@ function getGrowthTag(current, previous) {
 }
 
 async function loadStats() {
-    const snap = await getDocs(query(collection(db, "saved_workouts"), orderBy("savedAt", "asc")));
-    const statsContent = document.getElementById('statsContent');
-    
-    if (snap.empty) {
-        statsContent.innerHTML = '<div class="empty-state">저장된 기록이 없습니다.</div>';
-        return;
-    }
-
-    const monthlyData = {};
-    const monthsOrdered = [];
-    const seenItems = new Set();
-
-    snap.forEach(d => {
-        const item = d.data();
-        const uniqueKey = `${item.createdAt}_${item.sets}_${item.rounds}`;
-        if (seenItems.has(uniqueKey)) return; 
-        seenItems.add(uniqueKey);
-
-        const dateObj = new Date(item.savedAt);
-        const monthKey = `${dateObj.getFullYear()}년 ${dateObj.getMonth() + 1}월`;
+    try {
+        const snap = await getDocs(query(collection(db, "saved_workouts"), orderBy("savedAt", "asc")));
+        const statsContent = document.getElementById('statsContent');
         
-        // 🛠️ 핵심 수정: 마지막 휴식 시간을 포함하여 INDEX 파일과 계산 방식 통일 (04:00 정석)
-        const workoutTime = (item.work + item.rest) * (item.sets * item.rounds);
-
-        if (!monthlyData[monthKey]) {
-            monthlyData[monthKey] = { sessions: 0, totalSeconds: 0, items: [] };
-            monthsOrdered.push(monthKey);
+        if (snap.empty) {
+            statsContent.innerHTML = '<div class="empty-state">저장된 기록이 없습니다.</div>';
+            return;
         }
 
-        monthlyData[monthKey].sessions += 1;
-        monthlyData[monthKey].totalSeconds += workoutTime;
-        monthlyData[monthKey].items.unshift({ id: d.id, ...item, workoutTime });
-    });
+        const monthlyData = {};
+        const monthsOrdered = [];
+        const seenItems = new Set();
 
-    monthsOrdered.reverse();
+        snap.forEach(d => {
+            const item = d.data();
+            const uniqueKey = `${item.createdAt}_${item.sets}_${item.rounds}`;
+            if (seenItems.has(uniqueKey)) return; 
+            seenItems.add(uniqueKey);
 
-    let finalHtml = "";
-    monthsOrdered.forEach((month, index) => {
-        const data = monthlyData[month];
-        const prevMonthKey = monthsOrdered[index + 1];
-        const prevData = prevMonthKey ? monthlyData[prevMonthKey] : null;
-        const isOpen = index === 0 ? "open" : "";
+            const dateObj = new Date(item.savedAt);
+            const monthKey = `${dateObj.getFullYear()}년 ${dateObj.getMonth() + 1}월`;
+            
+            const workoutTime = (item.work + item.rest) * (item.sets * item.rounds);
 
-        finalHtml += `
-            <div class="month-section ${isOpen}">
-                <div class="month-header" onclick="toggleMonth(this)">
-                    <div class="month-title">${month}</div>
-                    <div class="toggle-icon">▼</div>
-                </div>
-                <div class="month-summary">
-                    <div class="month-card"><span>한 달 운동 시간</span><b>${formatLongTime(data.totalSeconds)}</b>${getGrowthTag(data.totalSeconds, prevData?.totalSeconds)}</div>
-                    <div class="month-card"><span>한 달 운동 횟수</span><b>${data.sessions}회</b>${getGrowthTag(data.sessions, prevData?.sessions)}</div>
-                </div>
-                <div class="month-details">
-                    ${data.items.map(i => `
-                        <div class="saved-item">
-                            <div class="saved-info">
-                                <b>${i.sets}세트 X ${i.rounds}라운드</b>
-                                <span>${i.date}</span>
-                            </div>
-                            <div class="saved-btns">
-                                <span class="time-badge">${formatTime(i.workoutTime)}</span>
-                                <button class="btn-del-text" onclick="deleteSavedItem('${i.id}')">삭제</button>
-                            </div>
-                        </div>`).join('')}
-                </div>
-            </div>`;
-    });
-    statsContent.innerHTML = finalHtml;
+            if (!monthlyData[monthKey]) {
+                monthlyData[monthKey] = { sessions: 0, totalSeconds: 0, items: [] };
+                monthsOrdered.push(monthKey);
+            }
+
+            monthlyData[monthKey].sessions += 1;
+            monthlyData[monthKey].totalSeconds += workoutTime;
+            monthlyData[monthKey].items.unshift({ id: d.id, ...item, workoutTime });
+        });
+
+        monthsOrdered.reverse();
+
+        let finalHtml = "";
+        monthsOrdered.forEach((month, index) => {
+            const data = monthlyData[month];
+            const prevMonthKey = monthsOrdered[index + 1];
+            const prevData = prevMonthKey ? monthlyData[prevMonthKey] : null;
+            const isOpen = index === 0 ? "open" : "";
+
+            finalHtml += `
+                <div class="month-section ${isOpen}">
+                    <div class="month-header" onclick="toggleMonth(this)">
+                        <div class="month-title">${month}</div>
+                        <div class="toggle-icon">▼</div>
+                    </div>
+                    <div class="month-summary">
+                        <div class="month-card"><span>한 달 운동 시간</span><b>${formatLongTime(data.totalSeconds)}</b>${getGrowthTag(data.totalSeconds, prevData?.totalSeconds)}</div>
+                        <div class="month-card"><span>한 달 운동 횟수</span><b>${data.sessions}회</b>${getGrowthTag(data.sessions, prevData?.sessions)}</div>
+                    </div>
+                    <div class="month-details">
+                        ${data.items.map(i => `
+                            <div class="saved-item">
+                                <div class="saved-info">
+                                    <b>${i.sets}세트 X ${i.rounds}라운드</b>
+                                    <span>${i.date}</span>
+                                </div>
+                                <div class="saved-btns">
+                                    <span class="time-badge">${formatTime(i.workoutTime)}</span>
+                                    <button class="btn-del-text" onclick="deleteSavedItem('${i.id}')">삭제</button>
+                                </div>
+                            </div>`).join('')}
+                    </div>
+                </div>`;
+        });
+        statsContent.innerHTML = finalHtml;
+    } catch (e) {
+        console.error("통계 로딩 실패:", e);
+        document.getElementById('statsContent').innerHTML = 
+            `<div class="empty-state" style="color: #ff4d4d;">데이터를 불러오는 중 오류가 발생했습니다.<br>${e.message}</div>`;
+    }
 }
