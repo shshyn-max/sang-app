@@ -12,10 +12,10 @@
 <div class="main-layout">
     <div class="timer-section container">
         <div class="settings" id="settingsArea">
-            <div style="text-align: center;"><label>운동</label><input type="text" id="inputWork"></div>
-            <div style="text-align: center;"><label>휴식</label><input type="text" id="inputRest"></div>
-            <div style="text-align: center;"><label>세트</label><input type="text" id="inputSets"></div>
-            <div style="text-align: center;"><label>라운드</label><input type="text" id="inputRounds"></div>
+            <div style="text-align: center;"><label>운동</label><input type="number" id="inputWork" inputmode="numeric" pattern="[0-9]*"></div>
+            <div style="text-align: center;"><label>휴식</label><input type="number" id="inputRest" inputmode="numeric" pattern="[0-9]*"></div>
+            <div style="text-align: center;"><label>세트</label><input type="number" id="inputSets" inputmode="numeric" pattern="[0-9]*"></div>
+            <div style="text-align: center;"><label>라운드</label><input type="number" id="inputRounds" inputmode="numeric" pattern="[0-9]*"></div>
         </div>
         <div class="info-panel">
             <div class="info-item"><span>PROGRESS (%)</span><b id="progressDisplay">0 / 0 (0%)</b></div>
