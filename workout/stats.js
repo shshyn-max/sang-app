@@ -22,14 +22,24 @@ signInAnonymously(auth)
         alert("Firebase 인증 오류: " + e.message);
     });
 
-onAuthStateChanged(auth, user => { if (user) { loadStats(); } });
+let currentUser = null;
+onAuthStateChanged(auth, user => { 
+    if (user) { 
+        currentUser = user;
+        loadStats(); 
+    } 
+});
 
 window.toggleMonth = (header) => { header.parentElement.classList.toggle('open'); };
 
 window.deleteSavedItem = async (id) => {
-    if(confirm("기록을 삭제하시겠습니까?")) {
-        await deleteDoc(doc(db, "saved_workouts", id));
+    if(!currentUser || !confirm("기록을 삭제하시겠습니까?")) return;
+    try {
+        await deleteDoc(doc(db, "users", currentUser.uid, "saved_workouts", id));
         loadStats();
+    } catch (e) {
+        console.error("삭제 실패:", e);
+        alert("삭제 중 오류가 발생했습니다.");
     }
 };
 
@@ -50,8 +60,9 @@ function getGrowthTag(current, previous) {
 }
 
 async function loadStats() {
+    if (!currentUser) return;
     try {
-        const snap = await getDocs(query(collection(db, "saved_workouts"), orderBy("savedAt", "asc")));
+        const snap = await getDocs(query(collection(db, "users", currentUser.uid, "saved_workouts"), orderBy("savedAt", "asc")));
         const statsContent = document.getElementById('statsContent');
         
         if (snap.empty) {

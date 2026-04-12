@@ -19,10 +19,20 @@ signInAnonymously(auth)
     .then(() => console.log("익명 로그인 성공"))
     .catch(e => {
         console.error("익명 로그인 실패:", e);
-        alert("Firebase 인증 오류: " + e.message + "\n콘솔 설정을 확인해주세요.");
+        alert("Firebase 인증 오류: " + e.message);
     });
 
-onAuthStateChanged(auth, user => { if (user) { renderPresets().then(() => renderHistory()); } });
+let currentUser = null;
+onAuthStateChanged(auth, user => { 
+    if (user) { 
+        currentUser = user;
+        console.log("사용자 확인:", user.uid);
+        renderPresets().then(() => renderHistory()); 
+    } 
+});
+
+// 사용자별 컬렉션 참조 헬퍼
+const getUserColl = (name) => collection(db, "users", currentUser.uid, name);
 
 let timerId = null, config = { work: 20, rest: 10, sets: 4, rounds: 2, prepare: 10 };
 let currentRoundTotal = 0, totalRounds = 8, mode = 'PREPARE', timeLeft = 10, totalSecondsLeft = 0, isPaused = false, isFinished = false;
@@ -33,7 +43,8 @@ function playBeep(f, d) { const o = audioCtx.createOscillator(), g = audioCtx.cr
 const formatTime = (s) => `${Math.floor(Math.max(0,s)/60).toString().padStart(2,'0')}:${(Math.max(0,s)%60).toString().padStart(2,'0')}`;
 
 async function renderPresets() {
-    const snap = await getDocs(query(collection(db, "workout_presets"), orderBy("updatedAt", "desc"), limit(15)));
+    if (!currentUser) return;
+    const snap = await getDocs(query(getUserColl("workout_presets"), orderBy("updatedAt", "desc"), limit(15)));
     const list = document.getElementById('presetList');
     list.innerHTML = "";
     if (!snap.empty) {
@@ -57,8 +68,9 @@ async function renderPresets() {
 }
 
 async function renderHistory() {
-    const historySnap = await getDocs(query(collection(db, "workout_history"), orderBy("createdAt", "desc"), limit(20)));
-    const savedSnap = await getDocs(collection(db, "saved_workouts"));
+    if (!currentUser) return;
+    const historySnap = await getDocs(query(getUserColl("workout_history"), orderBy("createdAt", "desc"), limit(20)));
+    const savedSnap = await getDocs(getUserColl("saved_workouts"));
     const savedKeys = new Set();
     savedSnap.forEach(d => { const data = d.data(); if(data.createdAt) savedKeys.add(`${data.createdAt}_${data.sets}_${data.rounds}`); });
     const list = document.getElementById('historyList');
@@ -73,22 +85,35 @@ async function renderHistory() {
 }
 
 async function registerPreset() {
+    if (!currentUser) return;
     const work = parseInt(document.getElementById('inputWork').value) || 0, rest = parseInt(document.getElementById('inputRest').value) || 0, sets = parseInt(document.getElementById('inputSets').value) || 1, rounds = parseInt(document.getElementById('inputRounds').value) || 1;
-    const q = query(collection(db, "workout_presets"), where("work", "==", work), where("rest", "==", rest), where("sets", "==", sets), where("rounds", "==", rounds));
+    const q = query(getUserColl("workout_presets"), where("work", "==", work), where("rest", "==", rest), where("sets", "==", sets), where("rounds", "==", rounds));
     const snap = await getDocs(q);
     if (!snap.empty) { alert("이미 등록된 세팅입니다."); return; }
-    await addDoc(collection(db, "workout_presets"), { work, rest, sets, rounds, updatedAt: Date.now() });
+    await addDoc(getUserColl("workout_presets"), { work, rest, sets, rounds, updatedAt: Date.now() });
     alert("최근 세팅에 추가되었습니다."); renderPresets();
 }
 
 window.applyPreset = (work, rest, sets, rounds) => { if (timerId || isPaused || isFinished) return; document.getElementById('inputWork').value = work; document.getElementById('inputRest').value = rest; document.getElementById('inputSets').value = sets; document.getElementById('inputRounds').value = rounds; updateInfo(); };
 window.saveToStats = async (btn, id) => {
-    if(!confirm("통계에 저장하시겠습니까?")) return;
-    const snap = await getDocs(query(collection(db, "workout_history"), where("__name__", "==", id)));
-    if (!snap.empty) { await addDoc(collection(db, "saved_workouts"), { ...snap.docs[0].data(), savedAt: Date.now() }); btn.innerText = "저장완료"; btn.classList.add('disabled'); }
+    if(!currentUser || !confirm("통계에 저장하시겠습니까?")) return;
+    const snap = await getDocs(query(getUserColl("workout_history"), where("__name__", "==", id)));
+    if (!snap.empty) { 
+        await addDoc(getUserColl("saved_workouts"), { ...snap.docs[0].data(), savedAt: Date.now() }); 
+        btn.innerText = "저장완료"; 
+        btn.classList.add('disabled'); 
+    }
 };
-window.deleteItem = async (id) => { if(confirm("삭제하시겠습니까?")) { await deleteDoc(doc(db, "workout_history", id)); renderHistory(); } };
-window.deletePreset = async (id) => { if(confirm("세팅을 삭제하시겠습니까?")) { await deleteDoc(doc(db, "workout_presets", id)); renderPresets(); } };
+window.deleteItem = async (id) => { 
+    if(!currentUser || !confirm("삭제하시겠습니까?")) return;
+    await deleteDoc(doc(db, "users", currentUser.uid, "workout_history", id)); 
+    renderHistory(); 
+};
+window.deletePreset = async (id) => { 
+    if(!currentUser || !confirm("세팅을 삭제하시겠습니까?")) return;
+    await deleteDoc(doc(db, "users", currentUser.uid, "workout_presets", id)); 
+    renderPresets(); 
+};
 
 function updateInfo() {
     config.work = parseInt(document.getElementById('inputWork').value) || 0; config.rest = parseInt(document.getElementById('inputRest').value) || 0; config.sets = parseInt(document.getElementById('inputSets').value) || 1; config.rounds = parseInt(document.getElementById('inputRounds').value) || 1;
@@ -133,15 +158,11 @@ async function finishWorkout() {
     confetti();
 
     try {
-        const user = auth.currentUser;
-        console.log("저장 시도 중... 현재 유저:", user ? user.uid : "비로그인");
-        
-        if (!user) {
-            console.log("로그인 정보 없음, 재시도 중...");
+        if (!currentUser) {
             await signInAnonymously(auth);
         }
 
-        await addDoc(collection(db, "workout_history"), { 
+        await addDoc(getUserColl("workout_history"), { 
             work: config.work, 
             rest: config.rest, 
             sets: config.sets, 
@@ -149,12 +170,10 @@ async function finishWorkout() {
             date: new Date().toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }), 
             createdAt: now 
         });
-        console.log("데이터베이스 저장 성공!");
         renderHistory(); 
     } catch (e) {
         console.error("결과 저장 실패 상세:", e);
-        const user = auth.currentUser;
-        alert(`[저장 실패] 계정상태: ${user ? '익명로그인됨' : '비로그인'}\n오류내용: ${e.message}\n익명로그인이 켜져있는지 콘솔을 확인해주세요.`);
+        alert(`[저장 실패] 오류: ${e.message}`);
     }
 }
 
